@@ -1,3 +1,5 @@
+import { useState } from "react";
+import DeleteModal from "../common/modal/DeleteModal";
 import styled from "styled-components";
 import logoUrl from "../../assets/images/kream_image.png";
 import homeUrl from "../../assets/icons/home_icon.png";
@@ -13,6 +15,7 @@ const LogoImage = styled.img`
 const HomeIcon = styled.img`
   width: 61px;
   height: 24px;
+  cursor: pointer;
 `;
 
 const HeaderContainer = styled.div`
@@ -48,8 +51,14 @@ const HeaderRight = styled.div`
 export default function Header() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const isDetailPage = pathname.startsWith("/item/");
+
+  const handleDelete = () => {
+    setIsModalOpen(false);
+    navigate("/"); // 삭제 후 메인으로 이동
+  };
 
   return (
     <div>
@@ -64,7 +73,7 @@ export default function Header() {
           {isDetailPage ? (
           <ButtonGroup>
             <Button onClick={() => navigate("/add")}>상품등록</Button>
-            <Button>상품삭제</Button>
+            <Button onClick={() => setIsModalOpen(true)}>상품삭제</Button>
             <Button>상품수정</Button>
           </ButtonGroup>
         ) : (
@@ -74,6 +83,13 @@ export default function Header() {
           <HomeIcon src={homeUrl} alt="home" onClick={() => navigate("/")} />
         </HeaderRight>
       </HeaderContainer>
+
+      {isModalOpen && (
+        <DeleteModal 
+          onConfirm={handleDelete} 
+          onCancel={() => setIsModalOpen(false)} 
+        />
+      )}
     </div>
   );
 }
