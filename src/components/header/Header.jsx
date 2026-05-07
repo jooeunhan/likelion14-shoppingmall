@@ -27,11 +27,16 @@ const HeaderContainer = styled.div`
 
 const Button = styled.div`
   color: #6c6c6c;
+  font-weight: 400;
   font-size: 13px;
   font-family: Pretendard;
-  font-weight: 400;
   margin-top: 9px;
   cursor: pointer;
+
+  ${props => props.$active && `
+    color: #000;
+    font-weight: 700;
+  `}
 `;
 
 const ButtonGroup = styled.div`
@@ -53,7 +58,9 @@ export default function Header() {
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const isDetailPage = pathname.startsWith("/item/");
+  const isDPageOrEPage = pathname.startsWith("/item/") || pathname.startsWith("/edit/");
+
+  const isActive = (path) => pathname === path;
 
   const handleDelete = () => {
     setIsModalOpen(false);
@@ -70,14 +77,29 @@ export default function Header() {
         />
 
         <HeaderRight>
-          {isDetailPage ? (
+          {isDPageOrEPage ? (
           <ButtonGroup>
-            <Button onClick={() => navigate("/add")}>상품등록</Button>
+            <Button 
+              onClick={() => navigate("/add")} 
+              $active={pathname === "/add"}
+            >
+              상품등록
+            </Button>
             <Button onClick={() => setIsModalOpen(true)}>상품삭제</Button>
-            <Button>상품수정</Button>
+            <Button 
+              onClick={() => navigate(`/edit/${pathname.split("/")[2]}`)}
+              $active={pathname.startsWith("/edit/")}
+            >
+              상품수정
+            </Button>
           </ButtonGroup>
         ) : (
-          <Button onClick={() => navigate("/add")}>상품등록</Button>
+          <Button 
+            onClick={() => navigate("/add")}
+            $active={pathname === "/add"}
+          >
+            상품등록
+          </Button>
         )}
 
           <HomeIcon src={homeUrl} alt="home" onClick={() => navigate("/")} />
