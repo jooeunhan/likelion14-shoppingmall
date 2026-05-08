@@ -53,12 +53,12 @@ export function ImageUploader({ defaultImage }) {
           <ProductPreviewImg src={imagePreview} alt="product preview" />
         )}
       </UploadWrapper>
-      <input 
-        type="file" 
-        accept="image/*" 
-        ref={fileInputRef} 
-        onChange={handleImageChange} 
-        style={{ display: 'none' }} 
+      <input
+        type="file"
+        accept="image/*"
+        ref={fileInputRef}
+        onChange={handleImageChange}
+        style={{ display: 'none' }}
       />
     </>
   );
@@ -171,10 +171,14 @@ const SubmitButton = styled.button`
 export default function ProductForm({ type, initialData }) {
   const isUpdate = type === "update";
 
+  const [selectedGender, setSelectedGender] = useState(isUpdate ? initialData?.성별 : null);
+  const [selectedType, setSelectedType] = useState(isUpdate ? initialData?.종류 : null);
+  const [selectedColor, setSelectedColor] = useState(isUpdate ? initialData?.색상 : null);
+
   return (
     <FormContainer>
       <Title>상품 정보 {isUpdate ? "수정" : "등록"}</Title>
-      
+
       <InputGroup>
         <Label>상품명</Label>
         <Input defaultValue={initialData?.name} placeholder="상품명을 입력하세요" />
@@ -197,35 +201,53 @@ export default function ProductForm({ type, initialData }) {
 
       <InputGroup>
         <Label>사이즈</Label>
-        <Input defaultValue={initialData?.size} placeholder="사이즈를 입력하세요" />
+        <Input defaultValue={initialData?.사이즈} placeholder="사이즈를 입력하세요" />
       </InputGroup>
 
       <InputGroup>
         <Label>종류</Label>
         <SelectGroup $gap="7px">
-          <SelectButton style={{width: '102px'}}>의류</SelectButton>
-          <SelectButton style={{width: '102px'}}>신발</SelectButton>
+          {["의류", "신발"].map((t) => (
+            <SelectButton
+              style={{ width: '102px' }}
+              key={t}
+              type="button"
+              $active={selectedType === t}
+              onClick={() => setSelectedType(t)}
+            >
+              {t}
+            </SelectButton>
+          ))}
         </SelectGroup>
       </InputGroup>
 
       <InputGroup>
         <Label>성별</Label>
         <SelectGroup $gap="5px">
-          <SelectButton>남성</SelectButton>
-          <SelectButton>여성</SelectButton>
-          <SelectButton>남녀공용</SelectButton>
+          {["남성", "여성", "남녀공용"].map((g) => (
+            <SelectButton
+              key={g}
+              type="button"
+              $active={selectedGender === g}
+              onClick={() => setSelectedGender(g)}
+            >
+              {g}
+            </SelectButton>
+          ))}
         </SelectGroup>
       </InputGroup>
 
       <InputGroup>
         <Label>색상</Label>
         <SelectGroup $gap="5px">
-          {['red', 'pink', 'blue', 'gray', 'black', 'denim', 'multi', 'rainbow', 'holographic'].map((color) => (
-            <SelectButton 
-              key={color} 
-              style={color === 'holographic' ? { flexGrow: 1, minWidth: 'auto' } : {}}
+          {['red', 'pink', 'blue', 'gray', 'black', 'denim', 'multi', 'rainbow', 'holographic'].map((c) => (
+            <SelectButton
+              key={c}
+              type="button"
+              $active={selectedColor === c}
+              onClick={() => setSelectedColor(c)}
             >
-              {color}
+              {c}
             </SelectButton>
           ))}
         </SelectGroup>
