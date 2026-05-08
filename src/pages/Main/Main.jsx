@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 
@@ -135,7 +135,7 @@ const ProductItem = ({ itemId, img, name, price, review }) => {
 
 export default function Main() {
   const [activeModal, setActiveModal] = useState(null);
-
+  const [sortType, setSortType] = useState("기본 정렬순");
   const [filters, setFilters] = useState({
     성별: "",
     색상: "",
@@ -145,24 +145,42 @@ export default function Main() {
   });
 
   const filterData = {
-    성별: ["female", "male", "unisex"],
-    색상: [
-      ["red", "pink", "blue"],
-      ["black", "gray", "denim"],
-      ["rainbow", "multi", "holographic"],
-    ],
-    사이즈: [
-      ["9", "10"],
-      ["S", "M", "L", "XL"],
-    ],
-    가격대: ["0~30$", "31~60$", "61~90$"],
-    종류: ["clothes", "shoes"],
+    성별: ["남성", "여성", "남녀공용"],
+    색상: ["red", "pink", "blue", "black", "gray", "denim", "rainbow", "multi", "holographic"],
+    사이즈: ["S", "M", "L", "XL", "9", "10"],
+    가격대: ["0~31$", "31~60$", "61~90$"],
+    종류: ["의류", "신발"],
   };
 
   const handleSelect = (category, value) => {
-    setFilters((prev) => ({ ...prev, [category]: value }));
+    const newValue = filters[category] === value ? "" : value;
+    setFilters((prev) => ({ ...prev, [category]: newValue }));
     setActiveModal(null);
   };
+
+  const filteredAndSortedProducts = useMemo(() => {
+    let result = [...productDummy];
+
+    Object.keys(filters).forEach((key) => {
+      if (filters[key]) {
+        result = result.filter((p) => p[key] === filters[key]);
+      }
+    });
+
+    if (sortType === "리뷰 많은순") {
+      result.sort((a, b) => {
+        const reviewA = parseInt(a.review.replace(/,/g, "")) || 0;
+        const reviewB = parseInt(b.review.replace(/,/g, "")) || 0;
+        return reviewB - reviewA; // 내림차순
+      });
+    } else if (sortType === "평점 높은순") {
+      result.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    } else {
+      result.sort((a, b) => a.id - b.id);
+    }
+
+    return result;
+  }, [filters, sortType]);
 
   return (
     <Container>
@@ -170,7 +188,7 @@ export default function Main() {
         <CategoryGroup>
           {Object.keys(filterData).map((category) => (
             <CategoryButton
-              itemId={category}
+              key={category}
               onClick={() => setActiveModal(category)}
             >
               {filters[category] ? filters[category] : category}
@@ -179,7 +197,10 @@ export default function Main() {
           ))}
         </CategoryGroup>
 
-        <SortDropdown />
+        <SortDropdown
+          currentSort={sortType}
+          onSortChange={(type) => setSortType(type)}
+        />
       </TopBar>
 
       {activeModal && (
@@ -193,7 +214,7 @@ export default function Main() {
       )}
 
       <ProductGrid>
-        {productDummy.map((product) => (
+        {filteredAndSortedProducts.map((product) => (
           <ProductItem
             key={product.id}
             itemId={product.id}

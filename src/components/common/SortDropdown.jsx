@@ -55,15 +55,14 @@ const MenuItem = styled.div`
   cursor: pointer;
 `;
 
-export default function SortDropdown() {
+export default function SortDropdown({ onSortChange, currentSort }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedSort, setSelectedSort] = useState("기본 정렬순");
-  const options = ["기본 정렬순", "평점 높은순", "리뷰 많은 순"];
+  const options = ["기본 정렬순", "평점 높은순", "리뷰 많은순"];
 
   return (
     <Container onClick={() => setIsOpen(!isOpen)}>
       <SortButton>
-        <span>{selectedSort}</span>
+        <span>{currentSort}</span>
         <Icon src={sortingIcon} alt="sort" />
       </SortButton>
 
@@ -72,15 +71,15 @@ export default function SortDropdown() {
           {options.map((option) => (
             <MenuItem
               key={option}
-              active={selectedSort === option}
+              active={currentSort === option}
               onClick={(e) => {
                 e.stopPropagation();
-                setSelectedSort(option);
+                onSortChange(option);
                 setIsOpen(false);
               }}
             >
               {option}
-              {selectedSort === option && <CheckIcon src={checkIcon} alt="checked" />}
+              {currentSort === option && <CheckIcon src={checkIcon} alt="checked" />}
             </MenuItem>
           ))}
         </DropdownMenu>
