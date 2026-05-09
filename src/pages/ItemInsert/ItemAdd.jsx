@@ -13,8 +13,6 @@ const ImageUploadBox = styled.div`
   justify-content: center;
   align-items: center;
   cursor: pointer;
-  
-  img { width: 48px; }
 `;
 
 export default function ItemAdd() {
