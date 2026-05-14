@@ -1,9 +1,10 @@
+import { useEffect, useState } from "react"
 import { useParams } from "react-router-dom";
 import ProductLayout from "../../layout/ProductLayout.jsx";
 import ProductForm from "./ProductForm.jsx";
-import productDummy from "../Main/productDummy.js";
 import styled from "styled-components";
-import { ImageUploader } from "./ProductForm.jsx"; 
+import { ImageUploader } from "./ProductForm.jsx";
+import { getItemDetail } from "../../api/shop.js";
 
 const EditImageWrapper = styled.div`
   width: 459px;
@@ -13,18 +14,32 @@ const EditImageWrapper = styled.div`
 
 export default function ItemEdit() {
   const { id } = useParams();
-  const product = productDummy?.find((item) => String(item.id) === String(id));
+  const [initialData, setInitialData] = useState(null);
 
-  if (!product) return null;
+  useEffect(() => {
+    const fetchItemDetail = async () => {
+      try {
+        const data = await getItemDetail("clothes", id);
+        setInitialData(data);
+      } catch (error) {
+        console.error("데이터 불러오기 실패", error);
+      }
+    };
+    fetchItemDetail();
+  }, [id]);
+
+  if (!initialData) {
+    return <div>데이터를 불러오는 중입니다...</div>;
+  }
 
   return (
     <ProductLayout
       leftContent={
         <EditImageWrapper>
-          <ImageUploader defaultImage={product.img} />
+          <ImageUploader defaultImage={initialData?.image} />
         </EditImageWrapper>
       }
-      rightContent={<ProductForm type="update" initialData={product} />}
+      rightContent={<ProductForm isUpdate={true} initialData={initialData} />}
     />
   );
 }

@@ -8,3 +8,18 @@ export const getItems = async (type = "clothes", params = {}) => {
     const res = await api.get(`/${type}`, { params });
     return res.data;
 }
+
+export const addItems = async (type, data) => {
+    const res = await api.post(`/${type}`, data);
+    return res.data;
+};
+
+export const getItemDetail = async (type, id) => {
+    const res = await api.get(`/${type}/${id}`);
+    return res.data;
+}
+
+export const updateItems = async (type, data) => {
+    const res = await api.put(`/${type}`, data);
+    return res.data;
+}

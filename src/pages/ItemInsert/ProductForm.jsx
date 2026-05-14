@@ -1,6 +1,8 @@
 import styled from "styled-components";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import uploadIcon from "../../assets/icons/upload_icon.svg";
+import { useNavigate, useParams } from "react-router-dom";
+import { addItems, updateItems } from "../../api/shop";
 
 const UploadWrapper = styled.div`
   width: 459px;
@@ -34,6 +36,12 @@ export function ImageUploader({ defaultImage }) {
   const [imagePreview, setImagePreview] = useState(defaultImage || null);
   const fileInputRef = useRef(null);
 
+  useEffect(() => {
+    if (defaultImage) {
+      setImagePreview(defaultImage);
+    }
+  }, [defaultImage]);
+
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file && file.type.startsWith("image/")) {
@@ -64,7 +72,7 @@ export function ImageUploader({ defaultImage }) {
   );
 }
 
-const FormContainer = styled.div`
+const FormContainer = styled.form`
   width: 285px;
   margin-left: 169px;
   padding: 27px 33px;
@@ -168,40 +176,136 @@ const SubmitButton = styled.button`
   }
 `;
 
-export default function ProductForm({ type, initialData }) {
-  const isUpdate = type === "update";
+export default function ProductForm({ isUpdate, initialData }) {
+  const navigate = useNavigate();
+  const { type: urlType } = useParams();
 
-  const [selectedGender, setSelectedGender] = useState(isUpdate ? initialData?.성별 : null);
-  const [selectedType, setSelectedType] = useState(isUpdate ? initialData?.종류 : null);
-  const [selectedColor, setSelectedColor] = useState(isUpdate ? initialData?.색상 : null);
+  const currentCategory = isUpdate ? initialData?.type : urlType;
+
+  const typeMap = { "의류": "clothes", "신발": "shoes", "clothes": "의류", "shoes": "신발" };
+  const genderMap = { "남성": "male", "여성": "female", "남녀공용": "unisex", "male": "남성", "female": "여성", "unisex": "남녀공용" };
+
+  const [formData, setFormData] = useState({
+    name: "",
+    rating: "",
+    reviews: "",
+    price: "",
+    size: "",
+    type: currentCategory || "",
+    gender: "",
+    color: "",
+    image: "",
+    soldout: 0
+  });
+
+  // 수정 모드
+  useEffect(() => {
+    if (isUpdate && initialData) {
+      setFormData({
+        name: initialData.name || "",
+        rating: initialData.rating || "",
+        reviews: initialData.reviews || undefined,
+        price: initialData.price || "",
+        size: initialData.size || "",
+        type: initialData.type || "",
+        gender: initialData.gender || "",
+        color: initialData.color || "",
+        image: initialData.image || "",
+        soldout: initialData.soldout || 0
+      });
+    }
+  }, [isUpdate, initialData]);
+
+const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const payload = {
+      ...formData,
+      price: Number(formData.price || 0),
+      rating: Number(formData.rating || 0),
+      reviews: Number(formData.reviews || 0),
+      soldout: formData.soldout ? 1 : 0,
+    };
+
+    try {
+      if (isUpdate) {
+        await updateItems(initialData.id, payload);
+        alert("상품이 수정되었습니다!");
+      } else {
+        await addItems(payload.type, payload);
+        alert("상품이 등록되었습니다!");
+      }
+      navigate(`/${payload.type}`);
+    } catch (error) {
+      console.error("제출 실패:", error);
+      alert("서버 오류가 발생했습니다. 입력값을 확인해주세요.");
+    }
+  };
 
   return (
-    <FormContainer>
+    <FormContainer onSubmit={handleSubmit}>
       <Title>상품 정보 {isUpdate ? "수정" : "등록"}</Title>
 
       <InputGroup>
         <Label>상품명</Label>
-        <Input defaultValue={initialData?.name} placeholder="상품명을 입력하세요" />
+        <Input 
+          name="name"
+          value={formData.name} 
+          onChange={handleInputChange}
+          placeholder="상품명을 입력하세요" 
+          required
+        />
       </InputGroup>
 
       <InputGroup>
         <Label>평점</Label>
-        <Input defaultValue={initialData?.rating} placeholder="평점을 입력하세요" />
+        <Input 
+          name="rating"
+          type="number" 
+          step="0.1"
+          value={formData.rating} 
+          onChange={handleInputChange}
+          placeholder="평점을 입력하세요" 
+        />
       </InputGroup>
 
       <InputGroup>
         <Label>리뷰수</Label>
-        <Input defaultValue={initialData?.review} placeholder="리뷰수를 입력하세요" />
+        <Input 
+          name="reviews"
+          type="number"
+          value={formData.reviews} 
+          onChange={handleInputChange}
+          placeholder="리뷰수를 입력하세요" 
+        />
       </InputGroup>
 
       <InputGroup>
         <Label>가격</Label>
-        <Input defaultValue={initialData?.price} placeholder="가격을 입력하세요" />
+        <Input 
+          name="price"
+          type="number"
+          value={formData.price} 
+          onChange={handleInputChange}
+          placeholder="가격을 입력하세요" 
+          required
+        />
       </InputGroup>
 
       <InputGroup>
         <Label>사이즈</Label>
-        <Input defaultValue={initialData?.사이즈} placeholder="사이즈를 입력하세요" />
+       <Input 
+          name="size"
+          value={formData.size} 
+          onChange={handleInputChange}
+          placeholder="사이즈를 입력하세요" 
+          required
+        />
       </InputGroup>
 
       <InputGroup>
@@ -212,8 +316,8 @@ export default function ProductForm({ type, initialData }) {
               style={{ width: '102px' }}
               key={t}
               type="button"
-              $active={selectedType === t}
-              onClick={() => setSelectedType(t)}
+              $active={formData.type === typeMap[t]}
+              onClick={() => setFormData(prev => ({ ...prev, type: typeMap[t] }))}
             >
               {t}
             </SelectButton>
@@ -228,8 +332,8 @@ export default function ProductForm({ type, initialData }) {
             <SelectButton
               key={g}
               type="button"
-              $active={selectedGender === g}
-              onClick={() => setSelectedGender(g)}
+              $active={formData.gender === genderMap[g]}
+              onClick={() => setFormData(prev => ({ ...prev, gender: genderMap[g] }))}
             >
               {g}
             </SelectButton>
@@ -244,8 +348,8 @@ export default function ProductForm({ type, initialData }) {
             <SelectButton
               key={c}
               type="button"
-              $active={selectedColor === c}
-              onClick={() => setSelectedColor(c)}
+              $active={formData.color === c}
+              onClick={() => setFormData(prev => ({ ...prev, color: c }))}
             >
               {c}
             </SelectButton>
@@ -253,7 +357,7 @@ export default function ProductForm({ type, initialData }) {
         </SelectGroup>
       </InputGroup>
 
-      <SubmitButton>
+      <SubmitButton type="submit">
         {isUpdate ? "상품 수정 완료" : "상품 등록 완료"}
       </SubmitButton>
     </FormContainer>
