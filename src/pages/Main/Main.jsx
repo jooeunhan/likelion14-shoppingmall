@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 
@@ -6,7 +6,8 @@ import Modal from "../../components/common/modal/Modal";
 import OptionSelector from "../../components/common/modal/OptionSelector";
 import SortDropdown from "../../components/common/SortDropdown";
 
-import productDummy from "./productDummy.js";
+// import productDummy from "./productDummy.js";
+import {getItems} from "../../api/shop";
 import dropdownIcon from "../../assets/icons/dropdown_icon.svg";
 
 const Container = styled.div`
@@ -134,6 +135,7 @@ const ProductItem = ({ itemId, img, name, price, review }) => {
 };
 
 export default function Main() {
+  const [items, setItems] = useState([]);
   const [activeModal, setActiveModal] = useState(null);
   const [sortType, setSortType] = useState("기본 정렬순");
   const [filters, setFilters] = useState({
@@ -144,11 +146,24 @@ export default function Main() {
     종류: "",
   });
 
+  useEffect(()=> {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await getItems("clothes");
+        if (!cancelled) setItems(Array.isArray(res) ? res : []);
+      } catch {
+        if (!cancelled) setItems([]);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
   const filterData = {
     성별: ["남성", "여성", "남녀공용"],
     색상: ["red", "pink", "blue", "black", "gray", "denim", "rainbow", "multi", "holographic"],
     사이즈: ["S", "M", "L", "XL", "9", "10"],
-    가격대: ["0~31$", "31~60$", "61~90$"],
+    가격대: ["0~100$", "100~300$", "300~500$"],
     종류: ["의류", "신발"],
   };
 
@@ -159,20 +174,28 @@ export default function Main() {
   };
 
   const filteredAndSortedProducts = useMemo(() => {
-    let result = [...productDummy];
+    let result = [...items];
 
-    Object.keys(filters).forEach((key) => {
-      if (filters[key]) {
-        result = result.filter((p) => p[key] === filters[key]);
+    const keyMap = { "성별": "gender", "색상": "color", "사이즈": "size", "가격대": "price", "종류": "type" };
+    const valueMap = { "남성": "male", "여성": "female", "남녀공용": "unisex", "의류": "clothes", "신발": "shoes" };
+
+    Object.keys(filters).forEach((korKey) => {
+      const selectedValue = filters[korKey];
+      if (!selectedValue) return;
+
+      const apiKey = keyMap[korKey];
+
+      if (korKey === "가격대") {
+        const [min, max] = selectedValue.replace(/\$/g, "").split("~").map(Number);
+        result = result.filter((p) => p[apiKey] >= min * 1000 && p[apiKey] <= max * 1000);
+      } else {
+        const targetValue = valueMap[selectedValue] || selectedValue;
+        result = result.filter((p) => String(p[apiKey]) === String(targetValue));
       }
     });
 
     if (sortType === "리뷰 많은순") {
-      result.sort((a, b) => {
-        const reviewA = parseInt(a.review.replace(/,/g, "")) || 0;
-        const reviewB = parseInt(b.review.replace(/,/g, "")) || 0;
-        return reviewB - reviewA; // 내림차순
-      });
+      result.sort((a, b) => (b.reviews || 0) - (a.reviews || 0));
     } else if (sortType === "평점 높은순") {
       result.sort((a, b) => (b.rating || 0) - (a.rating || 0));
     } else {
@@ -180,7 +203,7 @@ export default function Main() {
     }
 
     return result;
-  }, [filters, sortType]);
+  }, [items, filters, sortType]);
 
   return (
     <Container>
@@ -214,14 +237,14 @@ export default function Main() {
       )}
 
       <ProductGrid>
-        {filteredAndSortedProducts.map((product) => (
+        {filteredAndSortedProducts.map((item) => (
           <ProductItem
-            key={product.id}
-            itemId={product.id}
-            img={product.img}
-            name={product.name}
-            price={product.price}
-            review={product.review}
+            key={item.id}
+            itemId={item.id}
+            img={item.image}
+            name={item.name}
+            price={`${Number(item.price).toLocaleString()}원`}
+            review={item.reviews}
           />
         ))}
       </ProductGrid>
