@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DeleteModal from "../common/modal/DeleteModal";
 import styled from "styled-components";
 import logoUrl from "../../assets/images/kream_image.png";
@@ -65,15 +65,20 @@ export default function Header() {
 
   const isActive = (path) => pathname === path;
 
+  useEffect(() => {
+    setIsModalOpen(false);
+  }, [pathname]);
+
   const handleDelete = async () => {
     const currentId = pathname.split("/")[2];
 
     try {
       await deleteItem("clothes", currentId);
 
-      alert("삭제되었습니다.");
       setIsModalOpen(false);
-      navigate("/");
+      navigate("/", { replace: true });
+
+      alert("삭제되었습니다.");
     } catch (error) {
       console.error("삭제 실패:", error);
       alert("삭제 요청 중 오류가 발생했습니다.");
